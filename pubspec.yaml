@@ -1,6 +1,6 @@
 name: aws_iot_device
 description: A wrapper around MQTT to make it easier to connect to AWS IoT.
-version: 0.0.1
+version: 0.0.2
 homepage: https://bitbucket.org/TheBosZ/aws_iot_device/
 author: Nathan Kerr <nathankerr@gmail.com>
 
