@@ -31,4 +31,4 @@ var device = AWSIoTDevice(region, accessKey, secretAccessKey, sessionToken, host
 }
 ```
 
-What about private keys the like? Well, using Cognito credentials means you don't need that stuff.
+What about private keys and the like? Well, using Cognito credentials means you don't need that stuff.
