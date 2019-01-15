@@ -21,7 +21,7 @@ main() async {
   try {
     await device.connect(deviceId);
   } on Exception catch (e) {
-    print('Failed to connect, status is ${device.connectionStatus}');
+    print('Failed to connect, status is ${device}');
     exit(-1);
   }
 

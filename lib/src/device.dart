@@ -3,8 +3,9 @@ library aws_iot_device;
 import 'dart:async';
 
 import 'package:amazon_cognito_identity_dart/sig_v4.dart';
-import 'package:mqtt_client/mqtt_client.dart';
 import 'package:tuple/tuple.dart';
+import 'package:mqtt/mqtt_shared.dart';
+import 'package:mqtt/mqtt_connection_html_websocket.dart';
 
 class AWSIoTDevice {
 	final _SERVICE_NAME = 'iotdevicegateway';
@@ -18,34 +19,37 @@ class AWSIoTDevice {
 	String _sessionToken;
 	String _host;
 	bool _logging;
+	int _messageId = 0;
 
 	var _onConnected;
 	var _onDisconnected;
-	var _onSubscribed;
-	var _onSubscribeFail;
-	var _onUnsubscribed;
+//	var _onSubscribed;
+//	var _onSubscribeFail;
+//	var _onUnsubscribed;
+//
+	Map<String, int> _topics = Map<String, int>();
 
-	get onConnected => _onConnected;
-
-	set onConnected(val) => _client?.onConnected = _onConnected = val;
-
-	get onDisconnected => _onDisconnected;
-
-	set onDisconnected(val) => _client?.onDisconnected = _onDisconnected = val;
-
-	get onSubscribed => _onSubscribed;
-
-	set onSubscribed(val) => _client?.onSubscribed = _onSubscribed = val;
-
-	get onSubscribeFail => _onSubscribeFail;
-
-	set onSubscribeFail(val) => _client?.onSubscribeFail = _onSubscribeFail = val;
-
-	get onUnsubscribed => _onUnsubscribed;
-
-	set onUnsubscribed(val) => _client?.onUnsubscribed = _onUnsubscribed = val;
-
-	get connectionStatus => _client?.connectionStatus;
+//	get onConnected => _onConnected;
+//
+//	set onConnected(val) => _client?.onConnected = _onConnected = val;
+//
+//	get onDisconnected => _onDisconnected;
+//
+//	set onDisconnected(val) => _client?.onDisconnected = _onDisconnected = val;
+//
+//	get onSubscribed => _onSubscribed;
+//
+//	set onSubscribed(val) => _client?.onSubscribed = _onSubscribed = val;
+//
+//	get onSubscribeFail => _onSubscribeFail;
+//
+//	set onSubscribeFail(val) => _client?.onSubscribeFail = _onSubscribeFail = val;
+//
+//	get onUnsubscribed => _onUnsubscribed;
+//
+//	set onUnsubscribed(val) => _client?.onUnsubscribed = _onUnsubscribed = val;
+//
+//	get connectionStatus => _client?.connectionStatus;
 
 	MqttClient _client;
 
@@ -70,9 +74,9 @@ class AWSIoTDevice {
 		_logging = logging;
 		_onConnected = onConnected;
 		_onDisconnected = onDisconnected;
-		_onSubscribed = onSubscribed;
-		_onSubscribeFail = onSubscribeFail;
-		_onUnsubscribed = onUnsubscribed;
+//		_onSubscribed = onSubscribed;
+//		_onSubscribeFail = onSubscribeFail;
+//		_onUnsubscribed = onUnsubscribed;
 
 		if (host.contains('amazonaws.com')) {
 			_host = host.split('.').first;
@@ -87,49 +91,52 @@ class AWSIoTDevice {
 		}
 
 		try {
-			await _client.connect();
+			await _client.connect(_onDisconnected);
 		} on Exception catch (e) {
 			_client.disconnect();
 			throw e;
 		}
-		_client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
-			for (MqttReceivedMessage<MqttMessage> message in c) {
-				final MqttPublishMessage recMess = message.payload;
-				final String pt =
-				MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-				_messagesController.add(Tuple2<String, String>(message.topic, pt));
-			}
-		});
+		await _onConnected();
+//		_client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
+//			for (MqttReceivedMessage<MqttMessage> message in c) {
+//				final MqttPublishMessage recMess = message.payload;
+//				final String pt =
+//				MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+//				_messagesController.add(Tuple2<String, String>(message.topic, pt));
+//			}
+//		});
 	}
 
 	_prepare(String clientId) {
 		final url = _prepareWebSocketUrl();
-		_client = MqttClient(url, clientId);
-		_client.logging(on: _logging);
-		_client.useWebSocket = true;
-		_client.port = 443;
-		_client.connectionMessage =
-			MqttConnectMessage().withClientIdentifier(clientId).keepAliveFor(300);
-		_client.keepAlivePeriod = 300;
-		if (_onConnected != null) {
-			_client.onConnected = _onConnected;
-		}
-
-		if (_onUnsubscribed != null) {
-			_client.onUnsubscribed = _onUnsubscribed;
-		}
-
-		if (_onSubscribeFail != null) {
-			_client.onSubscribeFail = _onSubscribeFail;
-		}
-
-		if (_onSubscribed != null) {
-			_client.onSubscribed = _onSubscribed;
-		}
-
-		if (_onDisconnected != null) {
-			_client.onDisconnected = _onDisconnected;
-		}
+		var mqttCnx = new MqttConnectionHtmlWebSocket.setOptions(url, "mqttv3.1");
+		_client = MqttClient(mqttCnx, clientID: clientId, qos: QOS_0);
+		_client.debugMessage = _logging;
+//		_client.logging(on: _logging);
+//		_client.useWebSocket = true;
+//		_client.port = 443;
+//		_client.connectionMessage =
+//			MqttConnectMessage().withClientIdentifier(clientId).keepAliveFor(300);
+//		_client.keepAlivePeriod = 300;
+//		if (_onConnected != null) {
+//			_client.onConnected = _onConnected;
+//		}
+//
+//		if (_onUnsubscribed != null) {
+//			_client.onUnsubscribed = _onUnsubscribed;
+//		}
+//
+//		if (_onSubscribeFail != null) {
+//			_client.onSubscribeFail = _onSubscribeFail;
+//		}
+//
+//		if (_onSubscribed != null) {
+//			_client.onSubscribed = _onSubscribed;
+//		}
+//
+//		if (_onDisconnected != null) {
+//			_client.onDisconnected = _onDisconnected;
+//		}
 	}
 
 	_prepareWebSocketUrl() {
@@ -221,22 +228,32 @@ class AWSIoTDevice {
 		return '${_host}.iot.${_region}.amazonaws.com';
 	}
 
-	void publishMessage(String topic, String payload) {
-		final MqttClientPayloadBuilder builder = MqttClientPayloadBuilder();
-		builder.addString(payload);
-		_client.publishMessage(topic, MqttQos.atMostOnce, builder.payload);
+	Future publishMessage(String topic, String payload) {
+//		final MqttClientPayloadBuilder builder = MqttClientPayloadBuilder();
+//		builder.addString(payload);
+//		_client.publishMessage(topic, MqttQos.atMostOnce, builder.payload);
+		return _client.publish(topic, payload);
 	}
 
 	void disconnect() {
 		return _client.disconnect();
 	}
 
-	Subscription subscribe(String topic,
-		[MqttQos qosLevel = MqttQos.atMostOnce]) {
-		return _client?.subscribe(topic, qosLevel);
+	Future subscribe(String topic, [int qosLevel = QOS_0]) async {
+		final result = await _client?.subscribe(topic, qosLevel, _onMessage);
+		_topics[topic] = result.messageID;
+		return result;
 	}
 
 	unsubscribe(String topic) {
-		_client?.unsubscribe(topic);
+		if (!_topics.containsKey(topic)) {
+			return;
+		}
+		final messageId = _topics[topic];
+		_client?.unsubscribe(topic, messageId);
+	}
+
+	_onMessage(String topic, data) {
+		_messagesController.add(Tuple2<String, String>(topic, data));
 	}
 }
