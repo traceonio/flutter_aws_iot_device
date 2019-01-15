@@ -235,4 +235,8 @@ class AWSIoTDevice {
 		[MqttQos qosLevel = MqttQos.atMostOnce]) {
 		return _client?.subscribe(topic, qosLevel);
 	}
+
+	unsubscribe(String topic) {
+		_client?.unsubscribe(topic);
+	}
 }

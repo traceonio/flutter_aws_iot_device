@@ -1,4 +1,4 @@
-A simple wrapper around [MQTT](https://pub.dartlang.org/packages/mqtt_client) to talk to the AWS IoT backend.
+A simple wrapper around [MQTT](https://pub.dartlang.org/packages/mqtt_client) to talk to the AWS IoT backend using Websockets.
 
 ## Usage
 
