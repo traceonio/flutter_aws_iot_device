@@ -3,62 +3,35 @@ library aws_iot_device;
 import 'dart:async';
 
 import 'package:amazon_cognito_identity_dart/sig_v4.dart';
+import 'package:aws_iot_device/src/socket_connection.dart';
 import 'package:tuple/tuple.dart';
 import 'package:mqtt/mqtt_shared.dart';
-import 'package:mqtt/mqtt_connection_html_websocket.dart';
-import 'package:mqtt/mqtt_connection_io_websocket.dart';
-import 'package:mqtt/mqtt_connection_io_socket.dart';
 
-enum ConnectionType {
-	HTMLWebSocket,
-	IOWebSocket,
-	IOSocket,
+enum QOS {
+	level0,
+	level1,
+	level2,
+	level3,
 }
 
-class AWSIoTDevice {
+class AWSIoTDevice<E extends SocketConnection> {
 	final _SERVICE_NAME = 'iotdevicegateway';
 	final _AWS4_REQUEST = 'aws4_request';
 	final _AWS4_HMAC_SHA256 = 'AWS4-HMAC-SHA256';
 	final _SCHEME = 'wss://';
 
-	ConnectionType _type;
+	E _connection;
 	String _region;
 	String _accessKeyId;
 	String _secretAccessKey;
 	String _sessionToken;
 	String _host;
 	bool _logging;
-	int _messageId = 0;
 
-	var _onConnected;
 	var _onDisconnected;
-//	var _onSubscribed;
-//	var _onSubscribeFail;
-//	var _onUnsubscribed;
-//
+
 	Map<String, int> _topics = Map<String, int>();
 
-//	get onConnected => _onConnected;
-//
-//	set onConnected(val) => _client?.onConnected = _onConnected = val;
-//
-//	get onDisconnected => _onDisconnected;
-//
-//	set onDisconnected(val) => _client?.onDisconnected = _onDisconnected = val;
-//
-//	get onSubscribed => _onSubscribed;
-//
-//	set onSubscribed(val) => _client?.onSubscribed = _onSubscribed = val;
-//
-//	get onSubscribeFail => _onSubscribeFail;
-//
-//	set onSubscribeFail(val) => _client?.onSubscribeFail = _onSubscribeFail = val;
-//
-//	get onUnsubscribed => _onUnsubscribed;
-//
-//	set onUnsubscribed(val) => _client?.onUnsubscribed = _onUnsubscribed = val;
-//
-//	get connectionStatus => _client?.connectionStatus;
 
 	MqttClient _client;
 
@@ -72,21 +45,16 @@ class AWSIoTDevice {
 		this._accessKeyId,
 		this._secretAccessKey,
 		this._sessionToken,
-		this._type,
-		String host, {
-			bool logging: false,
-			var onConnected: null,
-			var onDisconnected: null,
-			var onSubscribed: null,
-			var onSubscribeFail: null,
-			var onUnsubscribed: null,
+		String host,
+		{
+			E connection,
+			bool logging = false,
+			var onDisconnected = null,
 		}) {
+
+		_connection = connection;
 		_logging = logging;
-		_onConnected = onConnected;
 		_onDisconnected = onDisconnected;
-//		_onSubscribed = onSubscribed;
-//		_onSubscribeFail = onSubscribeFail;
-//		_onUnsubscribed = onUnsubscribed;
 
 		if (host.contains('amazonaws.com')) {
 			_host = host.split('.').first;
@@ -101,66 +69,24 @@ class AWSIoTDevice {
 		}
 
 		try {
-			await _client.connect(_onDisconnected);
+			await _client.connect(_handleDisconnected);
 		} on Exception catch (e) {
 			_client.disconnect();
 			throw e;
 		}
-		await _onConnected();
-//		_client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
-//			for (MqttReceivedMessage<MqttMessage> message in c) {
-//				final MqttPublishMessage recMess = message.payload;
-//				final String pt =
-//				MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-//				_messagesController.add(Tuple2<String, String>(message.topic, pt));
-//			}
-//		});
+	}
+
+	_handleDisconnected() {
+		if (_onDisconnected != null) {
+			_onDisconnected();
+		}
 	}
 
 	_prepare(String clientId) {
 		final url = _prepareWebSocketUrl();
-		var mqttCnx;
-		switch(_type) {
-			case ConnectionType.HTMLWebSocket:
-				mqttCnx =
-					MqttConnectionHtmlWebSocket.setOptions(url, "mqttv3.1");
-				break;
-			case ConnectionType.IOWebSocket:
-				mqttCnx = MqttConnectionIOWebSocket.setOptions(url);
-				break;
-			case ConnectionType.IOSocket:
-				mqttCnx =
-					MqttConnectionIOSocket.setOptions(host: url, port: 433);
-				break;
-		}
-
-		_client = MqttClient(mqttCnx, clientID: clientId, qos: QOS_0);
+		;
+		_client = MqttClient(_connection.getConnection(url), clientID: clientId, qos: QOS_0);
 		_client.debugMessage = _logging;
-//		_client.logging(on: _logging);
-//		_client.useWebSocket = true;
-//		_client.port = 443;
-//		_client.connectionMessage =
-//			MqttConnectMessage().withClientIdentifier(clientId).keepAliveFor(300);
-//		_client.keepAlivePeriod = 300;
-//		if (_onConnected != null) {
-//			_client.onConnected = _onConnected;
-//		}
-//
-//		if (_onUnsubscribed != null) {
-//			_client.onUnsubscribed = _onUnsubscribed;
-//		}
-//
-//		if (_onSubscribeFail != null) {
-//			_client.onSubscribeFail = _onSubscribeFail;
-//		}
-//
-//		if (_onSubscribed != null) {
-//			_client.onSubscribed = _onSubscribed;
-//		}
-//
-//		if (_onDisconnected != null) {
-//			_client.onDisconnected = _onDisconnected;
-//		}
 	}
 
 	_prepareWebSocketUrl() {
@@ -253,9 +179,6 @@ class AWSIoTDevice {
 	}
 
 	Future publishMessage(String topic, String payload) {
-//		final MqttClientPayloadBuilder builder = MqttClientPayloadBuilder();
-//		builder.addString(payload);
-//		_client.publishMessage(topic, MqttQos.atMostOnce, builder.payload);
 		return _client.publish(topic, payload);
 	}
 
@@ -263,8 +186,8 @@ class AWSIoTDevice {
 		return _client.disconnect();
 	}
 
-	Future subscribe(String topic, [int qosLevel = QOS_1]) async {
-		final result = await _client?.subscribe(topic, qosLevel, _onMessage);
+	Future subscribe(String topic, [QOS qosLevel = QOS.level1]) async {
+		final result = await _client?.subscribe(topic, _translateQOS(qosLevel), _onMessage);
 		_topics[topic] = result.messageID;
 		return result;
 	}
@@ -279,5 +202,21 @@ class AWSIoTDevice {
 
 	_onMessage(String topic, data) {
 		_messagesController.add(Tuple2<String, String>(topic, data));
+	}
+
+	int _translateQOS(QOS qos) {
+		switch(qos) {
+			case QOS.level0:
+				return QOS_0;
+			case QOS.level1:
+				return QOS_1;
+			case QOS.level2:
+				return QOS_2;
+			case QOS.level3:
+				return QOS_ALL;
+			default:
+				throw new Exception('Invalid QOS type');
+
+		}
 	}
 }

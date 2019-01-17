@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:aws_iot_device/aws_iot_device.dart';
+import 'package:aws_iot_device/io_websocket.dart';
 
 main() async {
   const region = 'us-east-1';
@@ -16,7 +17,8 @@ main() async {
   //This is the ID of the AWS IoT device
   const deviceId = '123-123-123-123';
 
-  var device = AWSIoTDevice(region, accessKey, secretAccessKey, sessionToken, host);
+  //Specify the type to choose a different socket type to use. HTML Websockets, Websockets and Sockets are supported
+  var device = AWSIoTDevice(region, accessKey, secretAccessKey, sessionToken, host, connection: IOWebSocket());
 
   try {
     await device.connect(deviceId);
