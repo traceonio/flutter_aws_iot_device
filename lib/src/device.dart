@@ -239,7 +239,7 @@ class AWSIoTDevice {
 		return _client.disconnect();
 	}
 
-	Future subscribe(String topic, [int qosLevel = QOS_0]) async {
+	Future subscribe(String topic, [int qosLevel = QOS_1]) async {
 		final result = await _client?.subscribe(topic, qosLevel, _onMessage);
 		_topics[topic] = result.messageID;
 		return result;
