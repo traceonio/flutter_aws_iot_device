@@ -6,6 +6,14 @@ import 'package:amazon_cognito_identity_dart/sig_v4.dart';
 import 'package:tuple/tuple.dart';
 import 'package:mqtt/mqtt_shared.dart';
 import 'package:mqtt/mqtt_connection_html_websocket.dart';
+import 'package:mqtt/mqtt_connection_io_websocket.dart';
+import 'package:mqtt/mqtt_connection_io_socket.dart';
+
+enum ConnectionType {
+	HTMLWebSocket,
+	IOWebSocket,
+	IOSocket,
+}
 
 class AWSIoTDevice {
 	final _SERVICE_NAME = 'iotdevicegateway';
@@ -13,6 +21,7 @@ class AWSIoTDevice {
 	final _AWS4_HMAC_SHA256 = 'AWS4-HMAC-SHA256';
 	final _SCHEME = 'wss://';
 
+	ConnectionType _type;
 	String _region;
 	String _accessKeyId;
 	String _secretAccessKey;
@@ -63,6 +72,7 @@ class AWSIoTDevice {
 		this._accessKeyId,
 		this._secretAccessKey,
 		this._sessionToken,
+		this._type,
 		String host, {
 			bool logging: false,
 			var onConnected: null,
@@ -109,7 +119,21 @@ class AWSIoTDevice {
 
 	_prepare(String clientId) {
 		final url = _prepareWebSocketUrl();
-		var mqttCnx = new MqttConnectionHtmlWebSocket.setOptions(url, "mqttv3.1");
+		var mqttCnx;
+		switch(_type) {
+			case ConnectionType.HTMLWebSocket:
+				mqttCnx =
+					MqttConnectionHtmlWebSocket.setOptions(url, "mqttv3.1");
+				break;
+			case ConnectionType.IOWebSocket:
+				mqttCnx = MqttConnectionIOWebSocket.setOptions(url);
+				break;
+			case ConnectionType.IOSocket:
+				mqttCnx =
+					MqttConnectionIOSocket.setOptions(host: url, port: 433);
+				break;
+		}
+
 		_client = MqttClient(mqttCnx, clientID: clientId, qos: QOS_0);
 		_client.debugMessage = _logging;
 //		_client.logging(on: _logging);
