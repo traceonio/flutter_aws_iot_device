@@ -14,11 +14,32 @@ getSignedRequest(
 		Map<String, String> queryParams,
 		String body = null,
 	}) {
+	return getSignedRequestWithStrings(
+		credentials.accessKeyId, credentials.secretAccessKey,
+		credentials.sessionToken, region, endpoint, path, method: method,
+		headers: headers,
+		queryParams: queryParams,
+		body: body);
+}
+
+getSignedRequestWithStrings(
+	String accessKeyId,
+	String secretAccessKey,
+	String sessionToken,
+	String region,
+	String endpoint,
+	String path,
+	{
+		String method = 'GET',
+		Map headers,
+		Map<String, String> queryParams,
+		String body = null,
+	}) {
 	final awsSigV4Client = AwsSigV4Client(
-		credentials.accessKeyId,
-		credentials.secretAccessKey,
+		accessKeyId,
+		secretAccessKey,
 		endpoint,
-		sessionToken: credentials.sessionToken,
+		sessionToken: sessionToken,
 		region: region,
 	);
 
