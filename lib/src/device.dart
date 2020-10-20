@@ -188,7 +188,7 @@ class AWSIoTDevice {
 		final hashedCanonicalRequest = SigV4.hashCanonicalRequest(request);
 		final stringToSign = SigV4.buildStringToSign(
 			now,
-			sigv4.buildCredentialScope(now, _region, _SERVICE_NAME),
+			SigV4.buildCredentialScope(now, _region, _SERVICE_NAME),
 			hashedCanonicalRequest);
 
 		final signingKey = SigV4.calculateSigningKey(
