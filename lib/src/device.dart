@@ -153,7 +153,6 @@ class AWSIoTDevice {
 			throw new Exception('Invalid host');
 		}
 
-		final sigv4 = SigV4();
 		final now = _generateDatetime(); //'20190103T172404Z'; //
 		final hostname = _buildHostname();
 
@@ -176,8 +175,8 @@ class AWSIoTDevice {
 			'X-Amz-SignedHeaders': 'host',
 		});
 
-		final canonicalQueryString = sigv4.buildCanonicalQueryString(queryParams);
-		final request = sigv4.buildCanonicalRequest(
+		final canonicalQueryString = SigV4.buildCanonicalQueryString(queryParams);
+		final request = SigV4.buildCanonicalRequest(
 			'GET',
 			path,
 			queryParams,
@@ -186,16 +185,16 @@ class AWSIoTDevice {
 			}),
 			payload);
 
-		final hashedCanonicalRequest = sigv4.hashCanonicalRequest(request);
-		final stringToSign = sigv4.buildStringToSign(
+		final hashedCanonicalRequest = SigV4.hashCanonicalRequest(request);
+		final stringToSign = SigV4.buildStringToSign(
 			now,
 			sigv4.buildCredentialScope(now, _region, _SERVICE_NAME),
 			hashedCanonicalRequest);
 
-		final signingKey = sigv4.calculateSigningKey(
+		final signingKey = SigV4.calculateSigningKey(
 			_secretAccessKey, now, _region, _SERVICE_NAME);
 
-		final signature = sigv4.calculateSignature(signingKey, stringToSign);
+		final signature = SigV4.calculateSignature(signingKey, stringToSign);
 
 		final finalParams =
 			'${canonicalQueryString}&X-Amz-Signature=${signature}&X-Amz-Security-Token=${Uri.encodeComponent(_sessionToken)}';
