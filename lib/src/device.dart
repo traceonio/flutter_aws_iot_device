@@ -3,6 +3,7 @@ library aws_iot_device;
 import 'dart:async';
 
 import 'package:amazon_cognito_identity_dart_2/sig_v4.dart';
+import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:tuple/tuple.dart';
 
