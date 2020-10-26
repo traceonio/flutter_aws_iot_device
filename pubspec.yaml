@@ -8,9 +8,9 @@ environment:
   sdk: '>=2.0.0 <3.0.0'
 
 dependencies:
-  amazon_cognito_identity_dart: ^0.0.20
-  mqtt_client: ^5.2.0
-  tuple: ^1.0.2
+  amazon_cognito_identity_dart: ^0.0.22
+  mqtt_client: ^8.0.0
+  tuple: ^1.0.3
 
 dev_dependencies:
   test: ^1.0.0
