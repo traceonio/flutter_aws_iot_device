@@ -3,7 +3,7 @@ library aws_iot_device;
 import 'dart:async';
 
 import 'package:amazon_cognito_identity_dart_2/sig_v4.dart';
-import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:tuple/tuple.dart';
 
 class AWSIoTDevice {
@@ -47,7 +47,7 @@ class AWSIoTDevice {
 
 	get connectionStatus => _client?.connectionStatus;
 
-	MqttClient _client;
+	MqttServerClient _client;
 
 	StreamController<Tuple2<String, String>> _messagesController =
 	StreamController<Tuple2<String, String>>();
@@ -104,7 +104,7 @@ class AWSIoTDevice {
 
 	_prepare(String clientId) {
 		final url = _prepareWebSocketUrl();
-		_client = MqttClient(url, clientId);
+		_client = MqttServerClient(url, clientId);
 		_client.logging(on: _logging);
 		_client.useWebSocket = true;
 		_client.port = 443;
